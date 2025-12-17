@@ -1,0 +1,239 @@
+Reliability in System Design
+
+Reliability in system design refers to the ability of a system to function correctly and continuously over a period of time without failures. In large-scale distributed systems, reliability ensures that users experience minimal disruptions despite hardware failures, software bugs, or network issues.
+
+---
+
+🔹 Summary 
+- Definition: Reliability is the probability that a system will function correctly over a given time, despite potential failures.  
+- Key Goal: Minimize downtime, data loss, and service disruptions.  
+- Common Techniques: Redundancy, replication, failover strategies, and monitoring.
+
+---
+
+🔹 Explanation
+
+1️⃣ Causes of System Failures
+- Hardware Failures: Disk crashes, network failures, memory corruption.  
+- Software Bugs: Unhandled exceptions, memory leaks, infinite loops.  
+- Human Errors: Misconfigurations, deployment mistakes, incorrect data entry.  
+- Network Issues: Packet loss, high latency, DNS failures.  
+- Scalability Problems: Increased load leading to resource exhaustion.
+
+---
+
+2️⃣ Techniques to Improve Reliability 
+
+✅ Redundancy
+- Definition: Duplicating components to avoid single points of failure (SPOF).  
+- Example: Running multiple database replicas to prevent data loss if one fails.  
+
+✅ Replication
+- Definition: Keeping multiple copies of data across different servers or regions.  
+- Example: Using leader-follower (primary-replica) or multi-leader replication in databases.  
+
+✅ Failover Mechanisms
+- Definition: Automatically switching to a backup system when the primary system fails.  
+- Example: Using **Load Balancers** to redirect traffic when one instance crashes.  
+
+✅ Auto-Recovery & Self-Healing**  
+- **Definition**: Systems detect failures and restore themselves automatically.  
+- **Example**: Kubernetes restarts failed containers automatically.  
+
+✅ Monitoring & Observability  
+- Definition: Proactively detecting failures using logging, metrics, and alerts.  
+- Example: Prometheus + Grafana to visualize server health.  
+
+✅ Chaos Engineering  
+- Definition: Intentionally injecting failures to test system resilience.  
+- Example: Netflix’s Chaos Monkey kills random services to ensure fault tolerance.  
+
+✅ Distributed Consensus
+- Definition: Ensuring all nodes in a distributed system agree on a single version of the truth.  
+- Example: Paxos and Raft algorithms for leader election in distributed databases.  
+
+---
+
+🔹 Practical Examples
+
+Example 1: Load Balancing for Reliability
+- Scenario: You are running an e-commerce website with millions of users.  
+- Solution: Use an NGINX Load Balancer to distribute traffic across multiple servers. If one fails, requests are routed to healthy servers.  
+
+Example 2: Database Replication for High Availability
+- Scenario: A financial application needs 24/7 database availability.  
+- Solution: Use MySQL Master-Slave Replication with a failover system (e.g., Orchestrator) to switch to a backup database if the primary fails.  
+
+Example 3: Disaster Recovery with Multi-Region Deployment
+- Scenario: A cloud-based application serving users globally.  
+- Solution: Deploy in multiple regions using AWS Multi-AZ (Availability Zones). If one region fails, traffic is routed to another.  
+
+---
+
+🔹 Keywords for Interviews**  
+- Fault Tolerance
+- High Availability (HA) 
+- Redundancy & Replication
+- Failover & Recovery 
+- Load Balancing
+- Leader Election  
+- Distributed Consensus (Raft, Paxos) 
+- Eventual Consistency vs. Strong Consistency 
+- CAP Theorem  
+- Observability (Logging, Monitoring, Tracing)
+- Chaos Engineering  
+- Distributed Transactions  
+- Zero Downtime Deployments  
+- Backpressure & Rate Limiting  
+
+Scalability in System Design
+
+Summary
+Scalability in system design refers to the ability of a system to handle increased load efficiently by adding resources (hardware, software, or network capacity). A scalable system maintains performance, availability, and reliability as demand grows. Scalability can be vertical (scale-up) by upgrading a single machine or horizontal (scale-out) by adding more machines.  
+
+---
+
+Detailed Explanation
+
+1. Types of Scalability
+- Vertical Scaling (Scale-Up): Adding more power (CPU, RAM, Disk) to a single server.
+  - Pros: Simple, no need for distributed systems, low operational complexity.
+  - Cons: Hardware limits, single point of failure, expensive.
+  - Example: Upgrading from a 4-core CPU to an 8-core CPU.
+  
+- Horizontal Scaling (Scale-Out): Adding more servers to distribute the load.
+  - Pros: High availability, redundancy, handles large-scale traffic.
+  - Cons: More complex, requires load balancing, eventual consistency issues.
+  - Example: Using multiple database replicas in a cluster.
+
+---
+
+2. Key Scalability Components
+1. Load Balancing                                           
+   - Distributes incoming requests across multiple servers.
+   - Examples: Nginx, HAProxy, AWS ELB, Cloudflare Load Balancer.
+  
+2. Database Scaling
+   - Read Replicas: Handling read-heavy workloads by creating copies of the database.
+   - Sharding: Splitting data into partitions for distributed storage.
+   - NoSQL Databases: Used for high-scalability (e.g., Cassandra, DynamoDB).
+
+3. Caching 
+   - Reduces database load by storing frequently accessed data in memory.
+   - Examples: Redis, Memcached.
+
+4. Microservices Architecture  
+   - Breaking down a monolithic application into smaller, independently deployable services.
+   - Uses API gateways and service discovery for efficient communication.
+
+5. synchronous Processing
+   - Message queues (RabbitMQ, Kafka) allow background processing to handle high loads.
+
+6. CDN (Content Delivery Network)  
+   - Reduces latency by caching static content closer to users.
+   - Examples: Cloudflare, Akamai, AWS CloudFront.
+
+7. Auto Scaling
+   - Dynamically adds/removes resources based on demand.
+   - Example: AWS Auto Scaling Groups.
+
+8. Eventual Consistency vs Strong Consistency  
+   - Strong Consistency: Immediate updates across distributed nodes (e.g., RDBMS).
+   - Eventual Consistency: Updates propagate over time (e.g., NoSQL, DynamoDB).
+
+---
+
+Practical Examples
+Example 1: Scaling a Web Application
+- Step 1: Use a Load Balancer (e.g., Nginx) to distribute traffic.
+- Step 2: Implement Database Replication for handling reads.
+- Step 3: Add a Cache Layer (Redis) to speed up responses.
+- Step 4: Use CDN to serve static content.
+- Step 5: Implement Auto-Scaling to dynamically add/remove servers.
+
+Example 2: Scaling an E-commerce Platform
+- Microservices: Separate services for user authentication, orders, inventory.
+- Queue Systems: Use Kafka/RabbitMQ for processing order requests asynchronously.
+- Sharding: Split the user database by region.
+
+---
+
+Keywords for Interviews
+🔹 Load Balancer  
+🔹 Auto Scaling  
+🔹 Vertical Scaling (Scale-Up)  
+🔹 Horizontal Scaling (Scale-Out)  
+🔹 Caching (Redis, Memcached)  
+🔹 CDN (Cloudflare, AWS CloudFront)  
+🔹 Database Replication  
+🔹 Sharding  
+🔹 NoSQL (MongoDB, DynamoDB)  
+🔹 Eventual Consistency  
+🔹 Strong Consistency  
+🔹 Microservices  
+🔹 Queue Systems (Kafka, RabbitMQ)  
+🔹 CAP Theorem (Consistency, Availability, Partition Tolerance)  
+🔹 Asynchronous Processing  
+
+
+
+Summary of Maintainability in System Design  
+
+Maintainability is a crucial aspect of software systems, ensuring they remain easy to modify, extend, and operate over time. Since the majority of software costs arise during maintenance, it is essential to design systems that minimize complexity and operational overhead.  
+
+Maintainability can be achieved through three key principles:  
+
+1. Operability – Making life easy for operations teams by ensuring system monitoring, automation, security, and smooth deployments.  
+2. Simplicity – Reducing accidental complexity, avoiding tangled dependencies, and using abstractions to manage complexity efficiently.  
+3. Evolvability – Designing systems that can adapt to new requirements, making it easy to refactor and extend features without breaking existing functionality.  
+
+By focusing on these principles, organizations can reduce technical debt, improve developer productivity, and build resilient, long-term software solutions.  
+
+---
+
+Keywords to Use in Interviews (Google, FAANG, etc.)
+
+General Maintainability Keywords:  
+- Technical Debt
+- Software Lifecycle 
+- Legacy System Management  
+- Code Maintainability  
+- Scalability vs. Maintainability Trade-offs 
+
+Operability Keywords:
+- Observability (Monitoring, Logging, Tracing, Metrics)  
+- Deployment Automation (CI/CD, Infrastructure as Code - Terraform, Kubernetes) 
+- System Health Monitoring (Prometheus, Grafana, Datadog, OpenTelemetry)  
+- Incident Response and Reliability Engineering (SRE Principles, Error Budgets, Postmortems)  
+- Configuration Management (Ansible, Helm, Puppet, Chef, SaltStack) 
+
+Simplicity Keywords: 
+- Abstraction and Encapsulation 
+- Modular System Design (Microservices, Service-Oriented Architecture - SOA)  
+- Domain-Driven Design (DDD)  
+- Separation of Concerns (SOC) 
+- Single Responsibility Principle (SRP)  
+- Refactoring and Clean Code Practices  
+- Avoiding Tight Coupling (Loose Coupling & High Cohesion)  
+
+Evolvability Keywords:  
+- Extensibility & Modifiability 
+- Backward Compatibility  
+- API Versioning & Deprecation Strategies 
+- Test-Driven Development (TDD, Unit Testing, Integration Testing, Canary Releases)  
+- Feature Flags & A/B Testing  
+- Zero-Downtime Deployments (Blue-Green, Canary Deployments, Rolling Updates)  
+
+Summary ----------------------------
+
+
+In this chapter, we have explored some fundamental ways of thinking about data- intensive applications. These principles will guide us through the rest of the book, where we dive into deep technical detail.
+An application has to meet various requirements in order to be useful. There are functional requirements (what it should do, such as allowing data to be stored, retrieved, searched, and processed in various ways), and some nonfunctional require‐ ments (general properties like security, reliability, compliance, scalability, compatibil‐ ity, and maintainability). In this chapter we discussed reliability, scalability, and maintainability in detail.
+
+Reliability means making systems work correctly, even when faults occur. Faults can be in hardware (typically random and uncorrelated), software (bugs are typically sys‐ tematic and hard to deal with), and humans (who inevitably make mistakes from time to time). Fault-tolerance techniques can hide certain types of faults from the end user.
+
+Scalability means having strategies for keeping performance good, even when load increases. In order to discuss scalability, we first need ways of describing load and performance quantitatively. We briefly looked at Twitter’s home timelines as an example of describing load, and response time percentiles as a way of measuring performance. In a scalable system, you can add processing capacity in order to remain reliable under high load.
+
+Maintainability has many facets, but in essence it’s about making life better for the engineering and operations teams who need to work with the system. Good abstrac‐ tions can help reduce complexity and make the system easier to modify and adapt for new use cases. Good operability means having good visibility into the system’s health, and having effective ways of managing it.
+There is unfortunately no easy fix for making applications reliable, scalable, or main‐ tainable. However, there are certain patterns and techniques that keep reappearing in different kinds of applications. In the next few chapters we will take a look at some examples of data systems and analyze how they work toward those goals.
+

@@ -1,0 +1,110 @@
+Chapter 3: Storage and Retrieval
+
+This chapter delves into how databases store and retrieve data efficiently. It explores different storage engines, indexing techniques, and trade-offs between various data structures used for storage.  
+
+---
+
+Summary
+
+- Data Storage Structures 
+  - Databases store data using specialized structures optimized for either transactional processing (OLTP) or analytical processing (OLAP).  
+  - There are two primary storage engines:
+    1. Log-Structured Storage (LSM-Trees, SSTables) – Writes data in batches and compacts them later. Used in high-write workloads.  
+    2. B-Trees (Balanced Trees, Indexing) – Stores data in a hierarchical structure for fast lookups. Used in traditional relational databases.  
+
+- Indexing Techniques  
+  - Indexes speed up queries by organizing data efficiently.
+  - Common types:
+    1. Hash Indexes – Used for exact lookups but not for range queries.  
+    2. B-Trees – Optimized for range queries, common in relational databases.  
+    3. LSM-Trees (Log-Structured Merge Trees) – Faster writes and good for workloads with heavy inserts.  
+
+- Comparing B-Trees and LSM-Trees  
+  - B-Trees: Good for read-heavy workloads but expensive writes.  
+  - LSM-Trees: Excellent write performance but requires compaction and background merging.  
+
+- Other Indexing Strategies
+  - Column-Oriented Storage – Used in OLAP databases for analytics (e.g., Apache Parquet).  
+  - Full-Text Indexing – Used in search engines (e.g., Elasticsearch).  
+
+- Database Trade-offs  
+  - Latency vs. Throughput – Optimizing for low-latency lookups vs. high throughput writes.  
+  - Read-Optimized vs. Write-Optimized Storage – Choosing between B-Trees (read-heavy) and LSM-Trees (write-heavy).  
+  - Memory vs. Disk Storage – Hot data is often kept in memory (e.g., Redis), while cold data is stored on disk.  
+
+---
+
+Key Concepts
+1. Storage Engines  
+   - B-Trees (Balanced tree structures for indexing)  
+   - LSM-Trees (Optimized for fast writes)  
+   - Hash Indexes (Quick lookups, poor range query support)  
+
+2. Indexing Strategies  
+   - Primary vs. Secondary Indexes (Direct vs. indirect lookup)  
+   - Clustered vs. Non-clustered Indexes  
+   -  Columnar Storage (for OLAP queries) 
+
+3. Performance Considerations  
+   - Disk-based vs. Memory-based databases  
+   - Write-heavy vs. Read-heavy workloads  
+   - Query Optimization (Indexing, Caching, Materialized Views)  
+
+4. Data Structures Used in Databases  
+   - B-Trees (Efficient range queries)  
+   - LSM-Trees (Fast writes, background compaction)  
+   - SSTables (Immutable, used in LSM-Trees)  
+
+5. Types of Databases  
+   - OLTP (Transactional Processing, Fast Reads/Writes, B-Trees)  
+   - OLAP (Analytical Processing, Column-Oriented, Data Warehouses) 
+
+---
+
+Keyword
+- B-Trees, LSM-Trees, Hash Indexes  
+- SSTables, Write-Ahead Logs (WAL), Compaction  
+- Primary vs. Secondary Indexes  
+- Columnar Storage, Row-Based Storage* 
+- OLTP vs. OLAP  
+- Bloom Filters, Query Optimization  
+- Page Caching, Memory-Mapped Files  
+
+---
+
+Interview Questions for Google & Amazon (SDE Intern)  
+
+### Conceptual Questions
+1. What are the differences between B-Trees and LSM-Trees?  
+2. Why are LSM-Trees better for write-heavy workloads?  
+3. What is a Write-Ahead Log (WAL), and why is it important?  
+4. Explain the differences between OLTP and OLAP databases.  
+5. How do secondary indexes impact performance in a database?  
+6. What is a Bloom filter, and how does it help with indexing?  
+7. How do columnar databases differ from row-oriented databases?  
+8. When should you use in-memory databases like Redis instead of disk-based databases?  
+
+### System Design & Practical Questions
+9. How would you design a database for a large-scale social media application?  
+10. If you have a write-heavy system, how would you optimize storage?  
+11. How do search engines like Elasticsearch optimize text queries?  
+12. How would you implement a recommendation system that requires fast lookups?  
+13. What caching strategies would you use to speed up database queries?  
+14. How would you handle database partitioning in a distributed system?  
+
+---
+
+
+Summary
+In this chapter we tried to get to the bottom of how databases handle storage and retrieval. What happens when you store data in a database, and what does the data‐ base do when you query for the data again later?
+On a high level, we saw that storage engines fall into two broad categories: those opti‐ mized for transaction processing (OLTP), and those optimized for analytics (OLAP). 
+There are big differences between the access patterns in those use cases:
+• OLTP systems are typically user-facing, which means that they may see a huge volume of requests. In order to handle the load, applications usually only touch a small number of records in each query. The application requests records using some kind of key, and the storage engine uses an index to find the data for the requested key. Disk seek time is often the bottleneck here.
+
+• Data warehouses and similar analytic systems are less well known, because they are primarily used by business analysts, not by end users. They handle a much lower volume of queries than OLTP systems, but each query is typically very demanding, requiring many millions of records to be scanned in a short time. Disk bandwidth (not seek time) is often the bottleneck here, and column- oriented storage is an increasingly popular solution for this kind of workload.
+
+On the OLTP side, we saw storage engines from two main schools of thought:
+• The log-structured school, which only permits appending to files and deleting obsolete files, but never updates a file that has been written. Bitcask, SSTables, LSM-trees, LevelDB, Cassandra, HBase, Lucene, and others belong to this group.
+
+• The update-in-place school, which treats the disk as a set of fixed-size pages that can be overwritten. B-trees are the biggest example of this philosophy, being used in all major relational databases and also many nonrelational ones.
+Log-structured storage engines are a comparatively recent development. Their key idea is that they systematically turn random-access writes into sequential writes on disk, which enables higher write throughput due to the performance characteristics of hard drives and SSDs.

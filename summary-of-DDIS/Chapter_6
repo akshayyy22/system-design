@@ -1,0 +1,177 @@
+Chapter 6: Partitioning — Complete Explanation
+
+---
+🔹 1. Why Partitioning?
+
+As data volume and request load grow, a **single machine can't handle all the traffic**.  
+So we **partition (shard)** data — break it into chunks and distribute them across many machines.
+
+Benefits:
+- Scalability: Each node handles a subset of data.
+- Fault Isolation: Failures are isolated to fewer nodes.
+- Parallelism: Independent partitions can process queries in parallel.
+
+---
+
+🔹 2. Partitioning Strategies
+
+a. Key Range Partitioning
+- Divide data based on **ordered ranges of keys**.
+- Example: user IDs 1–1000 on shard A, 1001–2000 on shard B.
+- **Advantage**: Good for range queries.
+- **Disadvantage**: Risk of **hot spots** if keys are not uniformly accessed.
+
+b. Hash Partitioning
+- Apply a **hash function** to the partition key and map it to a shard.
+- Uniform distribution, avoids hot spots.
+- **Problem**: Hard to do **range queries**, adding/removing nodes causes large reshuffling.
+
+c. **Directory-Based Partitioning**
+- Maintain a lookup table mapping keys to shards.
+- Offers flexibility but adds **central point of coordination**.
+
+---
+
+🔹 3. Challenges in Partitioned Systems
+
+a. **Rebalancing**
+- When adding/removing nodes, data must move between shards.
+- Needs to minimize downtime and data movement.
+
+b. **Skewed Workload**
+- Some partitions may get more traffic (hot spots), leading to unbalanced load.
+
+c. **Secondary Indexes**
+- Global secondary indexes across partitions are hard to maintain consistently.
+- Common to use **local indexes per partition**.
+
+---
+
+🔹 4. Partitioning and Queries
+
+a. **Single-Partition Queries**
+- Fast and efficient (local to one machine).
+- Ideal for key-based access.
+
+b. **Multi-Partition Queries**
+- More complex (involve coordination and merge of results).
+- Techniques: **scatter/gather**, **parallel queries**, **pre-aggregations**.
+
+---
+
+🔹 5. Joins and Transactions in Partitioned DBs
+
+a. **Joins**
+- Hard to do across partitions.
+- Often avoided in large-scale systems.
+- Instead, **denormalization** or **application-side joins** are used.
+
+b. **Distributed Transactions**
+- Difficult and expensive.
+- Many systems **avoid cross-partition transactions** or limit them to certain operations.
+- Techniques:
+  - **Two-Phase Commit (2PC)** (adds complexity, latency).
+  - **Partition-aware schema design** to co-locate related data.
+
+---
+
+🔹 6. Consistency and Partitioning
+
+- Partitioning complicates consistency:
+  - E.g., ensuring uniqueness constraints across partitions.
+- Trade-offs between consistency and performance.
+- Some systems offer **causal consistency**, **eventual consistency**, or **strong consistency** only within a partition.
+
+---
+
+🔹 7. Partitioning Strategies in Practice
+
+- **MongoDB**: Sharding with configurable key.
+- **Cassandra**: Hash-based partitioning, local secondary indexes.
+- **HBase**: Range-based partitioning using regions.
+- **DynamoDB**: Partition key-based sharding with autoscaling.
+
+---
+
+🔑 Keywords
+
+- **Partitioning / Sharding**
+- **Key Range Partitioning**
+- **Hash Partitioning**
+- **Directory-Based Partitioning**
+- **Rebalancing**
+- **Hot Spot**
+- **Secondary Index**
+- **Single-partition vs Multi-partition Query**
+- **Scatter/Gather**
+- **Two-Phase Commit (2PC)**
+- **Denormalization**
+- **Partition-aware design**
+
+---
+
+🧠 Chapter Summary
+
+Partitioning is the backbone of horizontal scalability in distributed databases.  
+It involves breaking data into shards and distributing them across nodes.  
+Choosing the right partitioning strategy (hash, range, directory) depends on your access patterns.  
+Partitioning enables systems to scale, but introduces new challenges:  
+handling skewed loads, performing cross-partition joins or transactions, rebalancing, and ensuring consistency.
+
+Proper partitioning **requires a deep understanding of your data access patterns**, as poor decisions can lead to hot spots, unbalanced shards, or expensive cross-shard operations.
+
+---
+
+🧪 Practice Questions (with Answers)
+
+1. **Why is partitioning necessary in distributed databases?**
+**Answer**: To scale horizontally by distributing data and workload across multiple machines, enabling high throughput and fault isolation.
+
+---
+
+2. **What is the main disadvantage of range-based partitioning?**
+**Answer**: It can lead to **hot spots** if some ranges are accessed more frequently than others.
+
+---
+
+3. **How does hash partitioning improve load distribution?**
+**Answer**: It applies a hash function to distribute keys **uniformly**, avoiding hot spots seen in range-based partitioning.
+
+---
+
+4. **What is a single-partition query and why is it desirable?**
+**Answer**: A query that touches only one shard. It’s fast and avoids coordination overhead between nodes.
+
+---
+
+5. **What is rebalancing in the context of partitioning?**
+**Answer**: Reassigning data across shards when nodes are added or removed, to maintain balanced distribution.
+
+---
+
+6. **Why are cross-partition joins avoided in large-scale systems?**
+**Answer**: They require expensive coordination and data movement, which increases latency and complexity.
+
+---
+
+7. **Name one method to handle multi-partition queries.**
+**Answer**: Scatter/gather — send the query to all partitions and aggregate results.
+
+---
+
+8. **What is a hot spot in partitioned systems?**
+**Answer**: A partition that receives **disproportionate traffic**, overloading a single node.
+
+---
+
+9. **What is a global secondary index and why is it hard in partitioned systems?**
+**Answer**: An index that spans across all shards. Hard to maintain consistency and freshness in a distributed setup.
+
+---
+
+10. **How do systems like Cassandra handle secondary indexes?**
+**Answer**: By maintaining **local secondary indexes** on each partition separately.
+
+---
+
+Would you like **diagrams or visual aids** for different partitioning strategies (range, hash, etc.)? I can also prepare **flashcards** or a **summary table** to help with quick revision. Let me know!

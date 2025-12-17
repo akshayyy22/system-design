@@ -1,0 +1,228 @@
+
+
+Chapter 11: Stream Processing
+This chapter contrasts stream processing with batch processing and explores architectures, use-cases, and system designs for low-latency, real-time data processing.
+🔹 Stream Processing Basics
+Definition: Continuous computation over unbounded, real-time data.
+
+
+Goal: Deliver low-latency, near real-time insights.
+
+
+🔹 Comparison: Stream vs Batch
+Aspect
+Batch Processing
+Stream Processing
+Input
+Finite (bounded) datasets
+Infinite (unbounded) event streams
+Latency
+High (minutes to hours)
+Low (milliseconds to seconds)
+Processing Model
+Periodic jobs
+Continuous jobs
+
+🔹 Stream Processing Use Cases
+Monitoring systems
+
+
+Real-time analytics (e.g., fraud detection, metrics)
+
+
+Data pipelines (ETL in real time)
+
+
+Alerting engines
+
+
+Log processing
+
+
+🔹 Messaging Systems in Stream Processing
+Message brokers (e.g., Apache Kafka, RabbitMQ)
+
+
+Guarantees: at-most-once, at-least-once, exactly-once
+
+
+Offset management for delivery guarantees
+
+
+🔹 Stateful Stream Processing
+Keeping local state (like counters, aggregates)
+
+
+Examples: windowed aggregations, joins
+
+
+Use of event time vs processing time
+
+
+🔹 Windows
+Handle infinite streams by creating finite “windows”
+
+
+Types: tumbling, hopping, sliding, session windows
+
+
+🔹 Event Time and Watermarks
+Event Time: When event occurred
+
+
+Processing Time: When system processes event
+
+
+Watermarks: Estimate how far behind event time processing is, to handle late data
+
+
+🔹 Fault Tolerance
+Checkpoints and state snapshots (e.g., in Apache Flink)
+
+
+Replayable logs (e.g., Kafka for reprocessing)
+
+
+🔹 Stateless vs Stateful Operators
+Stateless: Map, Filter
+
+
+Stateful: Windowing, Joins, Aggregations
+
+
+🔹 Join Strategies
+Stream-Stream Joins (requires windowing)
+
+
+Stream-Table Joins (like enrichments using lookup)
+
+
+🔹 Output and Sinks
+Writing results to databases, dashboards, or triggering actions
+
+
+
+🧠 2. Important Keywords
+Concept
+Description
+Stream Processing
+Real-time computation on event streams
+Event Time
+Timestamp when an event actually occurred
+Processing Time
+When the system processes the event
+Watermark
+Heuristic for late data detection
+Tumbling Window
+Non-overlapping fixed-size window
+Sliding Window
+Overlapping windows with fixed size and interval
+Session Window
+Window based on periods of activity separated by idle time
+Stateful Operator
+Maintains internal state (e.g., aggregates)
+Stream-Table Join
+Stream events matched with reference/static tables
+Exactly-Once Delivery
+Processing each event once despite failures
+Checkpointing
+Saving operator state periodically for recovery
+Kafka / Flink / Spark
+Frameworks for stream processing
+Windowed Aggregation
+Grouping stream events into time-based buckets for processing
+Backpressure
+Mechanism to slow down producers when consumers lag
+
+
+💼 3. Probable Interview Questions & Answers
+❓ Q1: What is stream processing, and how does it differ from batch processing?
+A: Stream processing continuously processes real-time data as it arrives, allowing low-latency computations. Batch processing handles finite, bounded data in chunks and is less suitable for real-time use cases.
+
+❓ Q2: What are tumbling and sliding windows in stream processing?
+A:
+Tumbling Window: Fixed-size, non-overlapping window.
+
+
+Sliding Window: Fixed-size but overlaps in time, allowing events to belong to multiple windows.
+
+
+
+❓ Q3: What is the difference between event time and processing time?
+A:
+Event Time: Timestamp assigned when the event occurred.
+
+
+Processing Time: When the system processes that event.
+ Event time ensures correctness in time-sensitive aggregations, especially with delayed data.
+
+
+
+❓ Q4: How do you handle late-arriving data in stream processing?
+A: Use watermarks to track event time progress. Late data can be handled by:
+Updating prior aggregations,
+
+
+Setting allowed lateness windows,
+
+
+Redirecting late data to a separate stream.
+
+
+
+❓ Q5: What are delivery semantics in stream processing?
+A:
+At-most-once: Events may be lost but never processed more than once.
+
+
+At-least-once: No events lost, but possible duplicates.
+
+
+Exactly-once: Each event processed once (requires idempotency and state checkpointing).
+
+
+
+❓ Q6: What tools or frameworks support stream processing?
+A:
+Apache Kafka: Durable log for messaging.
+
+
+Apache Flink: Low-latency, stateful stream processing.
+
+
+Apache Spark Structured Streaming: Micro-batch based stream processing.
+
+
+Apache Beam: Unified model for batch and stream processing.
+
+
+
+❓ Q7: What are stream-stream and stream-table joins?
+A:
+Stream-Stream Join: Joins two live streams over a time window.
+
+
+Stream-Table Join: Enriches streaming data using static reference tables or a changelog.
+
+
+
+❓ Q8: How is state managed in stream processing frameworks like Flink?
+A: State is managed per operator and can be persisted via checkpoints. On failure, the job is restarted from the latest checkpoint, preserving exactly-once guarantees.
+
+❓ Q9: What is backpressure and how is it handled?
+A: Backpressure occurs when consumers can't keep up with producers. Solutions include:
+Buffering events,
+
+
+Slowing down sources,
+
+
+Dynamic scaling of consumers.
+
+
+
+❓ Q10: When would you choose stream processing over batch processing?
+A: When low-latency insights are needed—e.g., fraud detection, IoT sensor monitoring, live analytics. Batch is better for large, periodic computations with no real-time requirement.
+
+Would you like a visual mind map or diagram summarizing these concepts?
+

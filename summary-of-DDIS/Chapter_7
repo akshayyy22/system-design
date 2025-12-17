@@ -1,0 +1,197 @@
+
+## Chapter 7: Transactions – Summary
+
+### 🎯 Purpose:
+
+Transactions are used to simplify error handling and concurrency control in distributed systems by ensuring atomicity, consistency, isolation, and durability (ACID).
+
+---
+
+### 📚 Key Concepts:
+
+1. ACID Properties:
+
+   * Atomicity: All operations in a transaction succeed or none do.
+   * Consistency: A transaction brings the database from one valid state to another.
+   * Isolation: Transactions appear to run in isolation (concurrent execution yields same result as serial execution).
+   * Durability: Once committed, the transaction’s changes persist even in case of crashes.
+
+2. Concurrency Control:
+
+   * Handles multiple users accessing data concurrently.
+   * Key techniques:
+
+     * Serializable isolation
+     * Snapshot isolation
+     * Read committed
+     * Repeatable read
+
+3. Implementation Techniques:
+
+   * Write-ahead logging (WAL)
+   * Two-phase commit (2PC)
+   * Optimistic concurrency control
+   * Pessimistic concurrency control (locking)
+
+4. Weak Isolation Levels (for performance):
+
+   * Read Uncommitted: Dirty reads allowed.
+   * Read Committed: Prevents dirty reads.
+   * Repeatable Read: Prevents non-repeatable reads.
+   * Snapshot Isolation: Uses versioning, avoids write skew.
+   * Serializable: Strictest, simulates sequential execution.
+
+5. Write Skew and Anomalies:
+
+   * When concurrent transactions write to disjoint sets but break invariants (e.g., hospital on-call doctors).
+
+6. Serializable Isolation – Approaches:
+
+   * Serializable Snapshot Isolation (SSI): Detects conflicts at runtime.
+   * Two-phase locking (2PL): Locks all accessed items until commit.
+   * Serializable via timestamp ordering or true serializability.
+
+7. Distributed Transactions:
+
+   * More complex, often use 2PC to ensure atomicity across nodes.
+   * Risk of blocking if coordinator crashes.
+
+8. Best Practices:
+
+   * Favor idempotent operations and retries.
+   * Use transactions only where strict consistency is needed.
+   * Consider isolation levels based on application correctness vs. performance needs.
+
+---
+
+## 🔑 Keywords:
+
+* ACID
+* Atomicity
+* Consistency
+* Isolation
+* Durability
+* Snapshot Isolation
+* Serializable
+* Write-ahead logging (WAL)
+* Two-phase commit (2PC)
+* Optimistic concurrency
+* Write skew
+* Dirty read
+* Repeatable read
+* Pessimistic locking
+* Serializable Snapshot Isolation (SSI)
+
+---
+
+## 🎯 Interview Questions & Model Answers
+
+### 1. What are ACID properties?
+
+Answer:
+ACID stands for Atomicity, Consistency, Isolation, and Durability. They guarantee reliable processing of transactions:
+
+* Atomicity: All steps succeed or none do.
+* Consistency: Transitions database from one valid state to another.
+* Isolation: Transactions don’t interfere with each other.
+* Durability: Results persist after commit.
+
+---
+
+### 2. What is the difference between snapshot isolation and serializability?
+
+Answer:
+Snapshot isolation uses a consistent snapshot of data and versioning but allows **write skew**, violating true serializability. Serializable isolation ensures results are equivalent to some serial execution, preventing such anomalies.
+
+---
+
+### 3. What is a write skew anomaly?
+
+Answer:
+A write skew occurs when two concurrent transactions read overlapping data and write disjoint data, violating business rules. Example: Two doctors removing themselves from an on-call list if they see the other still present.
+
+---
+
+### 4. How does two-phase commit (2PC) work?
+
+Answer:
+2PC has a **prepare phase** (participants vote commit or abort) and a **commit phase** (coordinator tells all to commit if all voted yes). It ensures atomicity in distributed transactions but may block if the coordinator crashes.
+
+---
+
+### 5. How is write-ahead logging (WAL) used in databases?
+
+Answer:
+WAL records changes in a log before applying them to the database. This allows recovery after crashes by replaying or rolling back the log entries, ensuring durability and atomicity.
+
+---
+
+### 6. How does optimistic concurrency control work?
+
+Answer:
+It assumes conflicts are rare. Transactions proceed without locks but validate changes before commit. If conflict is detected (e.g., dirty writes), the transaction is aborted and retried.
+
+---
+
+### 7. Why are weaker isolation levels used in practice?
+
+Answer:
+Weaker isolation levels (like read committed or snapshot) offer better performance and concurrency. Full serializability is expensive and often unnecessary if application-level invariants can tolerate minor anomalies.
+
+---
+
+## 📌 Pro Tips for Interviews at Product-Based Companies:
+
+* Know when to trade off consistency for availability/performance.
+* Be able to spot anomalies in concurrent transactions.
+* Understand how databases like **PostgreSQL (SSI), MySQL (locking), and MongoDB** handle isolation.
+* Relate real-world examples (e.g., banking, booking systems) to transaction behaviors.
+
+-
+
+
+
+Summary
+Transactions are an abstraction layer that allows an application to pretend that cer‐ tain concurrency problems and certain kinds of hardware and software faults don’t exist. A large class of errors is reduced down to a simple transaction abort, and the application just needs to try again.
+In this chapter we saw many examples of problems that transactions help prevent. Not all applications are susceptible to all those problems: an application with very simple access patterns, such as reading and writing only a single record, can probably manage without transactions. However, for more complex access patterns, transac‐ tions can hugely reduce the number of potential error cases you need to think about.
+Without transactions, various error scenarios (processes crashing, network interrup‐ tions, power outages, disk full, unexpected concurrency, etc.) mean that data can become inconsistent in various ways. For example, denormalized data can easily go out of sync with the source data. Without transactions, it becomes very difficult to reason about the effects that complex interacting accesses can have on the database.
+In this chapter, we went particularly deep into the topic of concurrency control. We discussed several widely used isolation levels, in particular read committed, snapshot isolation (sometimes called repeatable read), and serializable. We characterized those isolation levels by discussing various examples of race conditions:
+Dirty reads
+
+One client reads another client’s writes before they have been committed. The read committed isolation level and stronger levels prevent dirty reads.
+Dirty writes
+
+One client overwrites data that another client has written, but not yet committed. Almost all transaction implementations prevent dirty writes.
+Read skew (nonrepeatable reads)
+
+A client sees different parts of the database at different points in time. This issue is most commonly prevented with snapshot isolation, which allows a transaction to read from a consistent snapshot at one point in time. It is usually implemented with multi-version concurrency control (MVCC).
+Lost updates
+Two clients concurrently perform a read-modify-write cycle. One overwrites the other’s write without incorporating its changes, so data is lost. Some implemen‐ tations of snapshot isolation prevent this anomaly automatically, while others require a manual lock (SELECT FOR UPDATE).
+Write skew
+A transaction reads something, makes a decision based on the value it saw, and writes the decision to the database. However, by the time the write is made, the premise of the decision is no longer true. Only serializable isolation prevents this anomaly.
+Phantom reads
+A transaction reads objects that match some search condition. Another client makes a write that affects the results of that search. Snapshot isolation prevents straightforward phantom reads, but phantoms in the context of write skew require special treatment, such as index-range locks.
+Weak isolation levels protect against some of those anomalies but leave you, the application developer, to handle others manually (e.g., using explicit locking). Only serializable isolation protects against all of these issues. We discussed three different approaches to implementing serializable transactions:
+Literally executing transactions in a serial order
+If you can make each transaction very fast to execute, and the transaction throughput is low enough to process on a single CPU core, this is a simple and effective option.
+Two-phase locking
+For decades this has been the standard way of implementing serializability, but many applications avoid using it because of its performance characteristics.
+Serializable snapshot isolation (SSI)
+A fairly new algorithm that avoids most of the downsides of the previous approaches. It uses an optimistic approach, allowing transactions to proceed without blocking. When a transaction wants to commit, it is checked, and it is aborted if the execution was not serializable.
+The examples in this chapter used a relational data model. However, as discussed in
+“The need for multi-object transactions” on page 231, transactions are a valuable database feature, no matter which data model is used.
+In this chapter, we explored ideas and algorithms mostly in the context of a database running on a single machine. Transactions in distributed databases open a new set of difficult challenges, which we’ll discuss in the next two chapters.
+
+
+
+Interview Tip: Relatable Scenario
+Q: Design a distributed banking system — how do you prevent double withdrawal?
+
+A:
+
+1. Use serializable isolation to ensure users can’t concurrently overdraw.
+
+2. Or, in high-throughput systems, use idempotent debit APIs and distributed locks or compare-and-set to enforce balance constraints.
+
+3. Use WAL and/or 2PC if transaction spans multiple services (e.g., user service, ledger service).
+
