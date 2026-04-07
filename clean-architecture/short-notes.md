@@ -175,3 +175,311 @@ Don't import `MySQLDatabase`. Import `DatabaseInterface`. The concrete MySQL imp
 Martin's practical rules: never refer to a volatile concrete class; never derive from one; never override a concrete function. Use Abstract Factories to create objects so even object creation doesn't create a concrete dependency. The **architectural boundary** between abstract and concrete is the curved line in his diagram — it becomes the famous boundary in Clean Architecture.
 
 These five SOLID principles are the architectural bricks. The next chapters (12 onwards) scale them up to **components** — how to package these well-designed modules into deployable units like JAR files, DLLs, and services. Ask whenever you're ready!
+
+---
+
+## Chapter 12 — Components
+
+Welcome back. We now move from SOLID principles (how to write clean code) to **Component Principles** (how to package that code into deployable units).
+
+A **component** is the smallest unit that can be independently deployed. In Java it's a `.jar` file. In .NET it's a `.dll`. In Ruby it's a `.gem`. These are the actual chunks of software that live on your hard drive, get shipped to servers, and get plugged into systems.
+
+Martin takes us on a fascinating history tour. In the 1960s, programs were written at fixed memory addresses — the programmer had to know *exactly* where in RAM the code would live. Library functions were physically pasted onto the end of your code and compiled together. If your library grew too big, you'd manually split your program into segments and jump around it. Messy, fragile, unscalable.
+
+The breakthrough was **relocatable binaries** — code that can be loaded anywhere in memory, with the loader automatically adjusting all the addresses. Then came **linkers** that could combine separately compiled files. Then **dynamic linking**, which deferred the linking until runtime.
+
+This history has a profound architectural conclusion: **the component plugin architecture was born from 50 years of engineering struggle.** Today, plugging a `.jar` into an application is trivially easy — but it represents decades of hard-won progress. Every `.jar` or `.dll` you ship is a component with the potential to be independently developed, tested, and deployed.
+
+---
+
+## Chapter 13 — Component Cohesion
+
+Now the crucial question: **which classes belong together in the same component?** Martin gives us three principles that pull in opposite directions.
+
+**REP — Reuse/Release Equivalence Principle:** *The granule of reuse is the granule of release.* Classes grouped into a component should be releasable together as a unit. They must share a theme or purpose that makes them belong together. If you can't write a single coherent release note for all the classes in a component, they probably don't belong together.
+
+**CCP — Common Closure Principle:** *Gather classes that change for the same reasons and at the same times. Separate classes that change for different reasons.* This is SRP applied to components. If a requirement change forces you to touch three different components, your architecture is fighting you. Ideally, one requirement change touches one component. This is the principle most important during active development.
+
+**CRP — Common Reuse Principle:** *Don't force users of a component to depend on things they don't need.* If you use one class from a component, you're forced to deploy the entire component. So only put classes together if they are *inseparable* — if someone who needs one truly needs all the others. This principle is about what should *not* be together.The key insight: these three principles **fight each other**. REP and CCP make components *bigger* (gather more things together). CRP makes components *smaller* (split things apart). A good architect finds the balance that suits the project's current phase. Early in a project, prioritize CCP — development speed matters more than reuse. As the project matures and others depend on it, CRP becomes more important.
+
+---
+
+## Chapter 14 — Component Coupling
+
+This chapter covers the rules for how components should *depend on each other*. Three powerful principles.
+
+**ADP — Acyclic Dependencies Principle:** *Allow no cycles in the component dependency graph.*
+
+Martin opens with the "morning after syndrome" — you come in to work, and your code that worked yesterday is now broken because someone changed something you depend on. The solution is to make the dependency graph a **Directed Acyclic Graph (DAG)** — you can follow the arrows of dependency but never loop back to where you started.
+
+Why does a cycle cause chaos? Suppose component A depends on B, B depends on C, and C depends on A. Now to test A, you must build B and C. To release B, you must have a compatible A and C. They've become one giant inseparable blob — the dreaded **"morning after syndrome" at scale**. Build times explode, teams step on each other, and unit testing becomes a nightmare.
+
+The fix: break cycles using DIP (insert an interface) or extract shared code into a new component that both depend on.
+
+**SDP — Stable Dependencies Principle:** *Depend in the direction of stability.*
+
+A **stable** component is one that many others depend on — it's hard to change because changing it ripples through the entire system. An **unstable** component has few dependents and is free to change easily.
+
+Martin defines a measurable metric: **Instability (I) = Fan-out ÷ (Fan-in + Fan-out)**, where Fan-in is incoming dependencies and Fan-out is outgoing. I = 0 means maximally stable (everyone depends on you, you depend on nothing). I = 1 means maximally unstable (you depend on others, nobody depends on you).
+
+The SDP says: **a component's I metric should be larger than the I metrics of the components it depends on.** In other words, your unstable code should depend on stable code — not the other way around. A volatile component (UI, experimental features) must never be depended upon by a stable one (core business logic).**SAP — Stable Abstractions Principle:** *A component should be as abstract as it is stable.*
+
+Here's the dilemma: business rules must be stable (many things depend on them), but stability can make them rigid and impossible to extend. The solution is **abstraction**. A stable component should be made of *interfaces and abstract classes* — things you can extend without changing. That way it's both stable (no one needs to modify it) and flexible (you can add new behavior by implementing the interface).
+
+Martin plots this on a graph with axes of Abstractness (A) and Instability (I), revealing two danger zones — the **Zone of Pain** (stable but concrete: database schemas, tightly coupled utilities — painful to change) and the **Zone of Uselessness** (abstract but unstable: no one depends on them, abandoned code). The sweet spot is the **Main Sequence** — the diagonal line between these zones. Well-designed components live on or near this line.
+
+---
+
+## Chapter 15 — What Is Architecture?
+
+We now open **Part V: Architecture** — the heart of the book.
+
+Martin starts with a powerful statement: *a software architect is a programmer, and continues to be a programmer.* Never fall for the idea that architects stop coding and just draw boxes. They must stay close to the code to understand the problems their decisions create for others.
+
+So what is architecture? It is **the shape given to a system** through decisions about how to divide it into components, how to arrange those components, and how they communicate. But the *purpose* of that shape is not to make the system work — bad architectures can still work. The purpose is to:
+
+- Make the system **easy to develop**
+- Make the system **easy to deploy**
+- Make the system **easy to operate**
+- Make the system **easy to maintain**
+
+And the strategy to achieve all four? **Leave as many options open as possible, for as long as possible.**
+
+This is the most important sentence in the chapter. Martin argues that every system has two parts: **Policy** (the business rules — the actual value) and **Details** (databases, web servers, frameworks, REST, microservices — all the plumbing). The architect's job is to make the policy completely ignorant of the details, so that detail decisions can be deferred, swapped, or changed without touching the core business logic.
+
+He gives a beautiful real example: when building FitNesse (a wiki-based testing tool), he and his son deliberately refused to choose a database for 18 months. They hid data access behind an interface, implemented it with in-memory hash tables, then flat files, and only later considered MySQL — which they ultimately never needed. Those 18 months were free of schema issues, query bugs, and database connection headaches. All tests ran fast.
+
+**A good architect maximizes the number of decisions not yet made.**
+
+The opposite lesson comes from two cautionary tales. Company P built a three-tier distributed system in preparation for "server farms" — and ran it all on a single machine for years, suffering all the overhead of distributed communication for no benefit. Company W hired an "architect" who imposed a full enterprise SOA framework on a small business, requiring dozens of message-passing steps just to add a phone number to a contact record. Both companies paid a massive human cost for premature decisions.
+
+---
+
+## Chapter 16 — Independence
+
+This chapter answers a beautiful question: *What does a truly independent architecture look like in practice?*
+
+Martin says a good architecture must support four things simultaneously — use cases, operation, development, and deployment. The strategy to achieve all four is **decoupling**, applied in two directions.
+
+**Decoupling Layers (horizontal cuts):** Every system naturally has layers that change for different reasons. The UI changes when designers want a new look. Business rules change when accountants revise procedures. The database changes when the DBA optimises schemas. Since they change for different reasons, they must be separated into different layers — UI, application-specific business rules, domain business rules, and database — so a change in one doesn't ripple into another.
+
+**Decoupling Use Cases (vertical cuts):** At the same time, think of thin vertical slices cutting through all those horizontal layers. The "Add Order" use case uses some UI, some business logic, and some database. The "Delete Order" use case uses different parts of each. If you decouple use cases vertically, you can add a new use case without interfering with the old ones. Each use case owns its narrow slice of every layer.Martin also addresses **decoupling modes** — how physically separated your components need to be. You have three choices: source-level (same executable, just separate code modules), deployment-level (separate `.jar` or `.dll` files), and service-level (fully separate processes over a network). His advice: **start at source level, then promote to service level only when needed.** A good architecture allows you to slide between these modes as the system matures, without rewriting the core.
+
+He also warns about **false duplication** — two use cases that look similar today but will diverge later. Don't merge them prematurely. True duplication means every change to one instance requires the same change to the other. Accidental duplication means they just happen to look alike right now.
+
+---
+
+## Chapter 17 — Boundaries: Drawing Lines
+
+This is one of the most important chapters in the book. Martin makes a deceptively simple claim: **Software architecture is the art of drawing lines.**
+
+Boundaries separate things that change at different rates, for different reasons, from things on the other side. The rule for where to draw them: **between what matters and what doesn't.** The GUI doesn't matter to business rules — draw a line. The database doesn't matter to the GUI — draw a line. The database doesn't matter to the business rules — draw a line.
+
+He opens with two cautionary stories. **Company P** built an elaborate three-tier distributed architecture (GUI servers, middleware servers, database servers) in anticipation of massive server farms — but every system they ever deployed ran on a single machine. They suffered all the overhead of distributed object serialization and network messaging for years, for a farm that never existed. **Company W** hired an architect who imposed a full enterprise SOA framework on a small business fleet management operation — adding a single contact person's phone number required querying a service registry, sending a `CreateContact` message with dozens of required fields, and then an `UpdateContact` message, firing up multiple services just to test anything. Both companies paid enormous human costs for decisions made too early and too ambitiously.
+
+Then comes the counterexample: **FitNesse**, Martin's own wiki-based testing tool. When building it, he and his son deliberately avoided choosing a database. They put all data access behind a `WikiPage` interface and implemented it first with stubs, then in-memory hash tables, then flat files. They never needed MySQL. This meant 18 months of development with no schema issues, no query bugs, no database connection problems, and fast-running tests. When a customer wanted MySQL anyway, he implemented a `MySqlWikiPage` class in one day.
+
+**The key insight:** draw boundaries between things that change for different reasons. The SRP tells you *where* — the axis of change is always the boundary. Business rules and GUI change for different reasons → boundary. Business rules and database change for different reasons → boundary.---
+
+## Chapter 18 — Boundary Anatomy
+
+Having established *where* to draw boundaries, this chapter explains *what* those boundaries physically look like. Martin identifies four kinds, arranged from weakest to strongest:
+
+**The Monolith (source-level boundary):** Everything lives in one executable. There are no physical separation lines at deployment — just disciplined code organisation, with interfaces between layers. Communication is just function calls — extremely fast and cheap. Boundaries here are invisible at runtime but critically important for team independence during development. Martin pointedly calls it "the dreaded monolith" — not because monoliths are bad, but because developers fear them unnecessarily.
+
+**Deployment Components (binary-level boundary):** Separate `.jar`, `.dll`, or `.gem` files. No recompilation needed when you swap one. Still in the same process and address space, so communication is still fast function calls. This is the most common level in modern enterprise systems.
+
+**Local Processes (process-level boundary):** Separate OS processes on the same machine. They communicate via sockets, message queues, or shared memory. Moderately expensive — involves OS calls and data marshalling. Chattiness should be limited. The same dependency rule applies: lower-level processes are plugins to higher-level ones; source code of a high-level process must never mention the name or address of a low-level one.
+
+**Services (network-level boundary):** The strongest boundary. Separate processes that may be on different machines, communicating only over the network. Very slow — tens of milliseconds to seconds per call. Chatty communication across service boundaries kills performance. Yet the same architectural rules still hold: lower-level services plug into higher-level services.
+
+Most real systems mix several of these. A microservice is typically a local monolith internally, surrounded by a service boundary externally. The rule is always the same regardless of boundary type: **source code dependencies point toward the higher-level component.**
+
+---
+
+## Chapter 19 — Policy and Level
+
+This chapter gives us a precise definition of something we've been saying informally for chapters: **what exactly is "high level" vs "low level"?**
+
+Martin's definition is beautifully concrete: **Level = distance from the inputs and outputs.** The farther a piece of code is from where data enters and exits the system, the higher its level. The closer to I/O, the lower its level.
+
+He illustrates with an encryption program. Data flows: keyboard input → translate character → write to output. The `Translate` component is the highest-level piece because it is farthest from both the keyboard (input) and the printer (output). The `ReadChar` and `WriteChar` functions are lowest-level because they sit directly at the I/O boundary.
+
+A naive implementation puts everything in one function: `encrypt() { while(true) writeChar(translate(readChar())); }`. This is architecturally wrong because the high-level `encrypt` function directly depends on the low-level `readChar` and `writeChar`. If you want to change the input from a keyboard to a file, you have to touch the encryption logic. That's wrong.
+
+The correct architecture wraps `Translate` in its own component with interfaces (`CharReader`, `CharWriter`) pointing inward. Low-level I/O implementations (`ConsoleReader`, `ConsoleWriter`) depend on those interfaces. The encryption algorithm knows nothing about how data arrives or departs.
+
+The deeper principle: **high-level policies change rarely and for important reasons. Low-level policies change frequently and urgently but for trivial reasons.** If they're entangled, every trivial I/O change ripples up to touch your most important business logic. Keeping them separated means low-level urgency never corrupts high-level stability.---
+
+## Chapter 20 — Business Rules
+
+This is the chapter where Martin finally answers a fundamental question that the whole book has been building toward: **what exactly are we trying to protect?** What is the "policy" we keep separating from "details"?
+
+The answer: **Business Rules** — and they come in two flavours.
+
+**Critical Business Rules** are rules that make or save the business money regardless of whether a computer is involved. A bank's rule that *"a loan accrues N% interest per year"* is a critical business rule. A clerk with an abacus could apply it. It exists independently of any software system. These rules operate on **Critical Business Data** — the loan balance, interest rate, and payment schedule that the rule needs. Rules and data together form an **Entity**.
+
+An Entity is a pure software object — a class or module — that contains only critical business logic and data. It knows nothing about databases, UIs, or frameworks. A `Loan` entity knows how to calculate interest and validate a payment. It doesn't know it's being stored in PostgreSQL or displayed in React. It is **pure business, and nothing else.** As Martin puts it: it is *unsullied* by baser concerns.
+
+**Use Cases** are the second flavour. These are application-specific rules — rules that only make sense in the context of the automated system. The rule *"a loan officer must verify credit score ≥ 500 before showing payment estimates"* is a use case. You would never do this with an abacus — it's a workflow rule specific to this software application.
+
+Use cases orchestrate Entities. They say: *"Given these inputs from the user, call these Entity methods, in this order, and return these outputs."* Critically, **Entities do not know about use cases, but use cases know about Entities.** Entities are at a higher level because they're general and reusable across many applications. Use cases are more specific and closer to I/O — they are lower level.Martin is very precise about **Request and Response Models**. A use case accepts input as a simple data structure (not an `HttpRequest`, not a Spring `@RequestBody`) and returns output as another simple data structure (not a view model, not a JSON object). These plain data objects carry no framework dependencies whatsoever. This matters because if your use case input type is `HttpRequest`, your business logic is now secretly dependent on the web. You can't test it without a web server. You can't run it in a batch job or from a CLI without hacking it.
+
+He also warns: don't share Entity objects as request/response models even if they look the same today. Entities and request/response models will diverge over time for different reasons. Sharing them violates SRP and creates tramp data — fields that exist only to carry irrelevant information between layers.
+
+His conclusion is memorable: *"Business rules are the reason a software system exists. They are the family jewels. The business rules should remain pristine, unsullied by baser concerns."*
+
+---
+
+## Chapter 21 — Screaming Architecture
+
+Martin opens with a thought experiment. Imagine looking at the blueprints of a building. If it's a house, you instantly recognise it — rooms, kitchen, bedrooms. If it's a library, the grand entrance and gallery of bookshelves scream *"LIBRARY."*
+
+Now look at your software project. When a new developer opens your top-level folder, what does it scream? Does it scream *"Health Care System"* — with folders named `Patients`, `Prescriptions`, `Billing`? Or does it scream *"Rails"* — with folders named `controllers`, `views`, `models`?
+
+**If your architecture screams a framework, it has been hijacked.**
+
+This is Martin's central point: **architectures are not about frameworks.** Frameworks are tools. A good architecture puts use cases at the centre — the actual business intent of the system — and treats everything else, including the delivery mechanism (web, mobile, CLI), as a peripheral concern to be decided later.
+
+The web is not an architecture. It is an IO device — just like a keyboard or printer. Your business logic should be completely ignorant of whether it's delivered over HTTP, a terminal, or a batch file. The fact that your application runs on the web is a *detail* that should not dominate your folder structure, your class hierarchy, or your thinking.
+
+Frameworks can be seductive. Their authors believe in them deeply. But the moment you let a framework dictate your architecture — wrapping your entities in `ActiveRecord`, your services in Spring beans — you have surrendered control. You have married the framework. **View it skeptically. Use it as a tool. Never let it become your way of life.**
+
+The practical test: **can you run your entire test suite without starting a web server or connecting to a database?** If yes, your architecture is clean. If no, your business logic has leaked into the plumbing.
+
+---
+
+## Chapter 22 — The Clean Architecture ⭐
+
+This is the most important chapter in the entire book. Everything that came before — SOLID, components, boundaries, policy levels, business rules — all converges here into one iconic diagram.
+
+Martin surveys several well-known architectures — Hexagonal Architecture (Ports and Adapters), DCI, BCE — and notes they all share the same objective: **separation of concerns through layering.** He unifies them into the **Clean Architecture**.The four rings, from innermost to outermost:
+
+**Entities (innermost):** Pure enterprise business rules. A `Loan` object that calculates interest. A `User` that validates its own fields. No knowledge of databases, web, or frameworks. These can be used by any application in the enterprise — today, tomorrow, forever.
+
+**Use Cases:** Application-specific business rules. They orchestrate the flow of data to and from Entities. A `CreateLoanUseCase` knows which Entity methods to call, in what order, for what inputs. It accepts a plain `Request` object and returns a plain `Response` object — no `HttpRequest`, no SQL.
+
+**Interface Adapters:** This ring converts data between the format the use cases want and the format the outside world uses. Controllers receive web requests and turn them into `Request` objects. Presenters take `Response` objects and turn them into `ViewModel` strings and booleans ready for display. Database Gateways translate entity queries into SQL. This is where all your MVC code lives.
+
+**Frameworks and Drivers (outermost):** The web framework, the database engine, the UI library. You write almost no code here — just thin glue connecting to the next ring inward. This is where all the details live, harmlessly contained on the periphery.
+
+**The Dependency Rule — the one law that governs everything:** *Source code dependencies must point only inward.* Nothing in an inner ring can mention the name of anything in an outer ring. Not a class name, not a function name, not a variable — nothing. The innermost ring is the most stable, the most abstract, and the most protected. The outermost ring is the most volatile, the most concrete, and the least protected.
+
+When crossing boundaries — say, a Use Case needs to call a Presenter — the DIP is applied. The Use Case calls an **Output Port interface** (defined in the inner ring). The Presenter (outer ring) implements that interface. Flow of control goes outward; source code dependency points inward. This is DIP in full architectural action.
+
+---
+
+## Chapter 23 — Presenters and Humble Objects
+
+Martin introduces one of the most elegant design patterns in the book: the **Humble Object Pattern**. The idea is simple and profound.
+
+Some code is inherently hard to test — GUI rendering, database access, network calls. Other code is easy to test — calculations, transformations, business logic. The Humble Object pattern says: **split every hard-to-test thing into two parts — a "Humble" part (does the untestable stuff, kept as thin as possible) and a testable part (does all the interesting logic).**
+
+Applied to the Presenter/View split:
+
+- The **View** is the Humble Object. It is brutally simple. It takes a `ViewModel` and renders it. Every string, every boolean flag, every formatted number is already in the `ViewModel`. The View literally just maps values to screen elements. There is no logic to test here.
+- The **Presenter** is the testable part. It takes a `Date` object and converts it to a formatted string. It takes a negative number and sets a `isNegative = true` flag. It decides which menu items should be greyed out. All of this logic is richly testable without a screen.
+
+This pattern appears at **every architectural boundary**:
+
+- **Database Gateways** — the Humble Object is the SQL execution; the testable object is the Gateway interface logic.
+- **ORMs** — Martin bluntly notes there is no such thing as an Object Relational *Mapper*, because objects are not data structures. They are better called *Data Mappers*, and they belong in the database layer as Humble Objects.
+- **Service Listeners** — the Humble Object handles the network protocol; the testable object handles the business of interpreting the data.
+
+The deeper implication: **testability is an architectural attribute.** Wherever you draw a boundary, you will find a Humble Object on one side and a testable object on the other. The presence of the Humble Object pattern is itself a signal that a genuine architectural boundary exists.
+
+---
+
+## Chapter 24 — Partial Boundaries
+
+Full architectural boundaries are **expensive**. They require reciprocal interfaces, separate input/output data structures, and independently deployable components. Building and maintaining all of that takes significant effort. Sometimes you sense a boundary might be needed in the future but aren't sure yet.
+
+Martin offers three lighter-weight approaches — **Partial Boundaries** — that hold the *place* for a boundary without paying the full cost:
+
+**Skip the Last Step:** Do all the design work for a full boundary — create the interfaces, the data structures, organise the code properly — but keep everything compiled and deployed as one component. You've paid the design cost but not the operational cost. This was the early strategy in FitNesse. The danger: without the physical separation, the discipline erodes over time and the boundary silently collapses.
+
+**One-Dimensional Boundary (Strategy Pattern):** Use a single interface without a reciprocal one. A `ServiceBoundary` interface separates the client from the `ServiceImpl`. The dependency inversion is in place, but there's nothing preventing back-channel dependencies from forming without discipline.
+
+**Facade Pattern:** Even simpler — a single Facade class lists all the services and delegates to the implementations. No DIP at all, but the client at least only sees the Facade and not the implementations directly. Easiest to implement; easiest to violate.
+
+The architect's judgement call: where might you need a real boundary someday? Implement a partial boundary now to preserve the option. Then watch. If the friction of not having the full boundary grows, upgrade to the full version.
+
+---
+
+## Chapter 25 — Layers and Boundaries
+
+Martin uses a delightfully simple game — *Hunt the Wumpus* (a 1972 text adventure) — to show that architectural boundaries proliferate in every real system, far beyond the classic three-layer (UI / Business Rules / Database) picture.
+
+Start simple: the game has a text UI, game rules, and data storage. Add the requirement that it must support multiple languages — now there's a boundary between language translation and the game rules. Add the requirement that text delivery might be a terminal, SMS, or chat app — now there's a boundary between the communication mechanism and the language layer. Add multiplayer over a network — a new boundary between local move management and server-side player management.
+
+Each new axis of change spawns a new boundary. Real systems have many more than three layers — they have many streams of data flow, each governed by its own set of boundaries, all pointing their dependencies upward toward the highest-level policies.The closing wisdom is one of the most honest passages in the book. Martin admits the architect's dilemma plainly: implementing full boundaries early is expensive and may be unnecessary (YAGNI). But ignoring them and adding them later is also expensive and risky. There is no formula. **The architect must watch the system evolve, notice the first signs of friction, and implement boundaries at the exact inflection point where the cost of implementing becomes less than the cost of ignoring.** This requires a watchful eye — not a one-time decision.
+
+---
+
+## Chapter 26 — The Main Component
+
+In every system there is at least one component that creates and wires everything together. Martin calls this **Main** — and it is, paradoxically, both the lowest-level module and the most important one to understand.
+
+Main is the **dirtiest component in the system.** It lives in the outermost ring of the Clean Architecture. It is the only place where concrete objects are `new`-ed up, where dependency injection frameworks are used, where configuration is read. Its job is simple: create all the factories, load all the configs, wire everything together, and then immediately hand control to the high-level business logic and step aside.
+
+Think of Main as a **plugin to the application.** Because it's just a plugin, you can have many — one for Dev (pointing at a local database), one for Test (using in-memory fakes), one for Production (pointing at real services), one per country or jurisdiction. Swapping environments becomes as simple as swapping which Main plugin runs.
+
+The profound implication: **if you think of Main as a dirty, low-level plugin rather than as the "most important" entry point, configuration and environment management become dramatically simpler.** Main doesn't matter architecturally. It just wires things up and gets out of the way.
+
+---
+
+## Chapter 27 — Services: Great and Small
+
+This chapter is a direct challenge to the microservices orthodoxy, and it is one of the most provocative in the book.
+
+Martin's blunt opening: **using services, by itself, is not an architecture.** Services are just expensive function calls across process boundaries. What makes something architecturally significant is whether it follows the Dependency Rule and separates high-level policy from low-level detail — not whether it runs as a separate process.
+
+He then dismantles two popular myths about microservices:
+
+**The Decoupling Fallacy:** Services running in separate processes can't share variables — but they're still coupled by the data they share. If you add a new field to a shared data record, every service that touches that field must change together. Services are strongly coupled through data. The interface between services is no more rigorous or formal than the interface between functions — it just costs more to call.
+
+**The Independent Development Fallacy:** Teams can't truly develop and deploy their services independently if those services are coupled by shared data or cross-cutting behaviour. Martin illustrates this with the famous **"Kitty Problem"**: a taxi dispatch system is decomposed into five microservices — TaxiUI, TaxiFinder, TaxiSelector, TaxiDispatcher, TaxiSupplier. One day marketing wants to add a kitten delivery feature. How many services need to change? **All of them.** Because the feature cuts across every functional boundary. The services were decomposed by function, not by the axes of change — so a cross-cutting concern touches everything.
+
+The fix is OOP + Clean Architecture applied *inside* the services. Use polymorphism and the Dependency Rule to make new features addable as new jar files that plug into existing services — without modifying the services themselves. The architectural boundaries run *through* services, not *between* them.---
+
+## Chapter 28 — The Test Boundary
+
+Tests are not outside the system. They are **part of the architecture**, following all the same rules — especially the Dependency Rule. Tests are the outermost ring of the Clean Architecture: they depend on the system, but nothing in the system depends on them.
+
+Martin's urgent warning: **the Fragile Tests Problem.** When tests are tightly coupled to the system's structure — one test class per production class, one test method per production method — a simple change to the production code breaks hundreds of tests. Teams begin to fear making changes because of the test fallout. Paradoxically, a poorly designed test suite makes the system *more rigid*, not less.
+
+The root cause is structural coupling. Tests coupled to implementation details break whenever those details change — even when the behaviour is unchanged.
+
+The solution is a **Testing API** — a special set of interfaces and hooks that let tests exercise the system's behaviour without depending on its internal structure. This API sits at the boundary between tests and the application. It may bypass security, force the system into specific states, and substitute fast in-memory fakes for databases. Over time, production code can be freely refactored — made more abstract and general — without breaking tests, because the tests depend on the Testing API, not the production code's structure directly.
+
+---
+
+## Chapter 29 — Clean Embedded Architecture
+
+This chapter, written by James Grenning, extends Clean Architecture principles to embedded systems — but its message applies to every developer who has ever buried database queries, platform calls, or framework dependencies directly in their business logic.
+
+The central distinction: **Software vs Firmware.**
+
+Software has a potentially long life — it can be maintained, extended, and ported. **Firmware** is code so entangled with the hardware that it dies when the hardware changes. And here is the provocative claim: *you don't have to be an embedded engineer to write firmware.* A developer who buries SQL directly in business logic is writing firmware. An Android developer who couples business logic to the Android API is writing firmware.
+
+The solution for embedded systems is a **Hardware Abstraction Layer (HAL)** — an interface that gives the software above it clean, hardware-independent function calls. Instead of `LED_GPIO_PIN_5 = HIGH`, the HAL exposes `Indicate_LowBattery()`. The software says what it wants to happen; the firmware says how it happens on this specific chip.
+
+When an OS is involved, a similar **OS Abstraction Layer (OSAL)** decouples the software from the specific RTOS. Switching from one real-time OS to another becomes a matter of writing a new OSAL rather than rewriting business logic scattered across thousands of files.
+
+The Kent Beck motto applies: *First make it work. Then make it right. Then make it fast.* Most embedded code stops at "make it work" — and becomes untestable, unmaintainable firmware for the rest of its life.
+
+---
+
+## Chapter 30 — The Database Is a Detail
+
+Martin opens with intentionally fighting words: *"From an architectural point of view, the database is a non-entity."*
+
+He's not dismissing the *data model* — how your data is structured is architecturally significant. He's dismissing the *database engine* — Oracle, MySQL, MongoDB, flat files — as an implementation detail that should never pollute your architecture.
+
+The historical explanation: databases became dominant because **disks are slow.** Random disk access takes milliseconds — a million times slower than RAM. Databases evolved as elaborate systems to mitigate this by organising data for efficient disk retrieval. But SSDs and RAM are rapidly replacing spinning disks. When all storage is RAM, you wouldn't organise data into tables and query it with SQL — you'd use linked lists, trees, and hash maps accessed via pointers, exactly as you already do *in memory after you've loaded the data.*
+
+The database is a mechanism for moving data between the surface of a disk and RAM. Your business logic should be completely unaware of this mechanism. The data model matters. The storage engine does not.
+
+He ends with a personal anecdote: he once built a system using flat files — the right engineering choice for the data's access patterns. A marketing manager insisted on adding a relational database — not for technical reasons, but because corporate customers expected the checkbox. Martin fought, lost, and eventually quit. Years later he admitted: *the manager was right, but not for engineering reasons.* Sometimes the irrational expectations of the market are real constraints — but even then, the database should be bolted on as a plugin, not embedded in the core.
+
+---
